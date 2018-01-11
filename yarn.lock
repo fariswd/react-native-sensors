@@ -3525,6 +3525,10 @@ react-mixin@2:
     object-assign "^2.0.0"
     smart-mixin "^1.2.0"
 
+react-native-clapper@^0.3.82:
+  version "0.3.82"
+  resolved "https://registry.yarnpkg.com/react-native-clapper/-/react-native-clapper-0.3.82.tgz#524329b9d450287792118eae9217e31ea6ca5a8e"
+
 react-native-sensor-manager@^0.1.10:
   version "0.1.10"
   resolved "https://registry.yarnpkg.com/react-native-sensor-manager/-/react-native-sensor-manager-0.1.10.tgz#c228280d67fddb668e715b4d7b823188de504da8"

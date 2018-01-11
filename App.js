@@ -14,6 +14,8 @@ import {
   DeviceEventEmitter
 } from 'react-native';
 import { SensorManager } from 'NativeModules';
+import reactMixin from 'react-mixin';
+import TimerMixin from 'react-timer-mixin';
 
 export default class App extends Component<{}> {
   constructor() {
@@ -35,21 +37,14 @@ export default class App extends Component<{}> {
 
     this.startSensor = this.startSensor.bind(this)
     this.checkStatus = this.checkStatus.bind(this)
+    this.timeMixin = this.timeMixin.bind(this)
   }
 
   startSensor () {
-    console.log('checkStatus')
-    this.setState({
-      accelX: 0
-    })
+    console.log('start Sensor')
     DeviceEventEmitter.addListener('LightSensor', (data) => {
       this.setState({
         lightSensor: data.light
-      })
-    });
-    DeviceEventEmitter.addListener('StepCounter', (data) => {
-      this.setState({
-        step: this.state.step + 1
       })
     });
     DeviceEventEmitter.addListener('StepCounter', (data) => {
@@ -58,15 +53,14 @@ export default class App extends Component<{}> {
         status: 'walk/run'
       })
     });
-
     DeviceEventEmitter.addListener('Accelerometer', (data) => {
+      this.checkStatus()
       this.setState({
         accelX: data.x,
         accelY: data.y,
         accelZ: data.z,
       })
     });
-
     DeviceEventEmitter.addListener('Gyroscope', (data) => {
       this.setState({
         gyroX: data.x,
@@ -93,16 +87,17 @@ export default class App extends Component<{}> {
     }
   }
 
-
+  timeMixin () {
+    this.setTimeout(() => {
+      console.log('I do not leak!');
+    }, 200);
+  }
 
   componentDidMount() {
     SensorManager.startStepCounter(100);
     SensorManager.startLightSensor(100);
     SensorManager.startAccelerometer(1000);
     SensorManager.startGyroscope(1000);
-    this.timer = setTimeout(() => {
-     console.log('I do not leak!');
-    }, 5000);
   }
 
   render() {
@@ -235,11 +230,20 @@ export default class App extends Component<{}> {
               color="#841584"
             />
           </View>
+          <View style={{ marginTop: 10 }}>
+            <Button
+              onPress={this.timeMixin}
+              title="Check time"
+              color="#841584"
+            />
+          </View>
         </View>
       </View>
     );
   }
 }
+
+reactMixin(App.prototype, TimerMixin);
 
 const styles = StyleSheet.create({
   container: {

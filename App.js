@@ -33,6 +33,7 @@ export default class App extends Component<{}> {
       accelY: 0.00,
       accelZ: 0.00,
       lightSensor: 0,
+      countForGetStatus: 0,
     }
 
     this.startSensor = this.startSensor.bind(this)
@@ -50,39 +51,45 @@ export default class App extends Component<{}> {
     DeviceEventEmitter.addListener('StepCounter', (data) => {
       this.setState({
         step: this.state.step + 1,
-        status: 'walk/run'
+        status: 'walk/run',
+        countForGetStatus: 0
       })
     });
     DeviceEventEmitter.addListener('Accelerometer', (data) => {
-      this.checkStatus()
+      if(this.state.countForGetStatus == 5) {
+        console.log(this.state.countForGetStatus)
+        this.checkStatus()
+      }
       this.setState({
-        accelX: data.x,
-        accelY: data.y,
-        accelZ: data.z,
+        accelX: (+data.x).toFixed(2),
+        accelY: (+data.y).toFixed(2),
+        accelZ: (+data.z).toFixed(2),
+        countForGetStatus: this.state.countForGetStatus + 1
       })
     });
     DeviceEventEmitter.addListener('Gyroscope', (data) => {
       this.setState({
-        gyroX: data.x,
-        gyroY: data.y,
-        gyroZ: data.z,
+        gyroX: (+data.x).toFixed(2),
+        gyroY: (+data.y).toFixed(2),
+        gyroZ: (+data.z).toFixed(2),
       })
     });
 
   }
 
   checkStatus() {
-    //if banyak set state statusnya
     console.log('checkStatus')
     let accelXstatus = this.state.accelX < 1.5 && this.state.accelX > -1.5
     let lightStatus = this.state.lightSensor < 10
     if(lightStatus && accelXstatus){
       this.setState({
-        status: 'rest/sleep'
+        status: 'rest/sleep',
+        countForGetStatus: 0
       })
     } else if (accelXstatus) {
       this.setState({
-        status: 'rest/sit'
+        status: 'rest/sit',
+        countForGetStatus: 0
       })
     }
   }

@@ -10,6 +10,7 @@
     "react": "16.2.0",
     "react-mixin": "2",
     "react-native": "0.52.0",
+    "react-native-clapper": "^0.3.82",
     "react-native-sensor-manager": "^0.1.10",
     "react-timer-mixin": "^0.13.3"
   },

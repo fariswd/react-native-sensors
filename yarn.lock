@@ -3525,6 +3525,10 @@ react-mixin@2:
     object-assign "^2.0.0"
     smart-mixin "^1.2.0"
 
+"react-native-audio@git+ssh://git@github.com:M0N3/react-native-audio.git":
+  version "3.2.2"
+  resolved "git+ssh://git@github.com:M0N3/react-native-audio.git#441c44e6337d3f87add947dd69df5b4eef015f75"
+
 react-native-sensor-manager@^0.1.10:
   version "0.1.10"
   resolved "https://registry.yarnpkg.com/react-native-sensor-manager/-/react-native-sensor-manager-0.1.10.tgz#c228280d67fddb668e715b4d7b823188de504da8"

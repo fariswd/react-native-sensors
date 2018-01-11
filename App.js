@@ -14,18 +14,14 @@ import {
   DeviceEventEmitter
 } from 'react-native';
 import { SensorManager } from 'NativeModules';
-import reactMixin from 'react-mixin';
-import TimerMixin from 'react-timer-mixin';
+import {AudioRecorder, AudioUtils} from 'react-native-audio';
 
 export default class App extends Component<{}> {
   constructor() {
     super()
     this.state = {
-      step: 0,
-      accel: false,
-      gyro: false,
-      light: false,
       status: 'unknown',
+      step: 0,
       gyroX: 0.00,
       gyroY: 0.00,
       gyroZ: 0.00,
@@ -33,12 +29,16 @@ export default class App extends Component<{}> {
       accelY: 0.00,
       accelZ: 0.00,
       lightSensor: 0,
+      decible: 0,
+      proximityNear: '',
+      proximityValue: 0,
+      proximityMaxRange: 0,
       countForGetStatus: 0,
     }
 
     this.startSensor = this.startSensor.bind(this)
     this.checkStatus = this.checkStatus.bind(this)
-    this.timeMixin = this.timeMixin.bind(this)
+    this.startRecording = this.startRecording.bind(this)
   }
 
   startSensor () {
@@ -55,10 +55,20 @@ export default class App extends Component<{}> {
         countForGetStatus: 0
       })
     });
+    DeviceEventEmitter.addListener('Gyroscope', (data) => {
+      this.setState({
+        gyroX: (+data.x).toFixed(2),
+        gyroY: (+data.y).toFixed(2),
+        gyroZ: (+data.z).toFixed(2),
+      })
+    });
     DeviceEventEmitter.addListener('Accelerometer', (data) => {
       if(this.state.countForGetStatus == 5) {
         console.log(this.state.countForGetStatus)
         this.checkStatus()
+        this.stopRecording()
+      } else if (this.state.countForGetStatus == 1) {
+        this.startRecording()
       }
       this.setState({
         accelX: (+data.x).toFixed(2),
@@ -67,21 +77,22 @@ export default class App extends Component<{}> {
         countForGetStatus: this.state.countForGetStatus + 1
       })
     });
-    DeviceEventEmitter.addListener('Gyroscope', (data) => {
+    DeviceEventEmitter.addListener('Proximity', (data) => {
       this.setState({
-        gyroX: (+data.x).toFixed(2),
-        gyroY: (+data.y).toFixed(2),
-        gyroZ: (+data.z).toFixed(2),
+        proximityNear: data.isNear,
+        proximityValue: data.value,
+        proximityMaxRange: data.maxRange
       })
     });
-
   }
 
   checkStatus() {
     console.log('checkStatus')
     let accelXstatus = this.state.accelX < 1.5 && this.state.accelX > -1.5
     let lightStatus = this.state.lightSensor < 10
-    if(lightStatus && accelXstatus){
+    let micStatus = this.state.decible < -45
+    console.log(accelXstatus, lightStatus, micStatus)
+    if(lightStatus && accelXstatus && micStatus){
       this.setState({
         status: 'rest/sleep',
         countForGetStatus: 0
@@ -91,13 +102,11 @@ export default class App extends Component<{}> {
         status: 'rest/sit',
         countForGetStatus: 0
       })
+    } else {
+      this.setState({
+        countForGetStatus: 0
+      })
     }
-  }
-
-  timeMixin () {
-    this.setTimeout(() => {
-      console.log('I do not leak!');
-    }, 200);
   }
 
   componentDidMount() {
@@ -105,6 +114,33 @@ export default class App extends Component<{}> {
     SensorManager.startLightSensor(100);
     SensorManager.startAccelerometer(1000);
     SensorManager.startGyroscope(1000);
+    SensorManager.startProximity(100);
+    this.startSensor()
+  }
+
+  startRecording() {
+    let audioPath = AudioUtils.DocumentDirectoryPath + '/test.aac';
+
+    AudioRecorder.prepareRecordingAtPath(audioPath, {
+      SampleRate: 22050,
+      Channels: 1,
+      AudioQuality: "Low",
+      AudioEncoding: "aac",
+      MeteringEnabled: true
+    });
+    AudioRecorder.startRecording()
+    .then((data) => {
+      AudioRecorder.onProgress = data => {
+        let decibels = Math.floor(data.currentMetering);
+        this.setState({
+          decible: decibels
+        })
+      };
+    });
+  }
+
+  stopRecording() {
+    AudioRecorder.stopRecording();
   }
 
   render() {
@@ -223,34 +259,54 @@ export default class App extends Component<{}> {
         </View>
 
         <View>
-          <View style={{ marginTop: 10 }}>
-            <Button
-              onPress={this.startSensor}
-              title="Start Sensor"
-              color="#841584"
-            />
-          </View>
-          <View style={{ marginTop: 10 }}>
-            <Button
-              onPress={this.checkStatus}
-              title="Check Status"
-              color="#841584"
-            />
-          </View>
-          <View style={{ marginTop: 10 }}>
-            <Button
-              onPress={this.timeMixin}
-              title="Check time"
-              color="#841584"
-            />
+          <Text style={styles.fontSize}>
+            Microphone:
+          </Text>
+          <View style={{ flexDirection: 'row'}}>
+            <View>
+              <Text style={styles.fontSize}>
+                { this.state.decible }
+              </Text>
+            </View>
           </View>
         </View>
+
+
+        <View>
+          <Text style={styles.fontSize}>
+            Proxymity:
+          </Text>
+          <View style={{ flexDirection: 'row'}}>
+            <View style={{ width: 110, }}>
+              <Text style={styles.fontSize}>
+                Value
+              </Text>
+            </View>
+            <View style={{ width: 110, }}>
+              <Text style={styles.fontSize}>
+                Max
+              </Text>
+            </View>
+          </View>
+          <View style={{ flexDirection: 'row'}}>
+            <View style={{ width: 110, }}>
+              <Text style={styles.fontSize}>
+                { this.state.proximityValue }
+              </Text>
+            </View>
+            <View style={{ width: 110, }}>
+              <Text style={styles.fontSize}>
+                { this.state.proximityMaxRange }
+              </Text>
+            </View>
+          </View>
+        </View>
+
       </View>
     );
   }
 }
 
-reactMixin(App.prototype, TimerMixin);
 
 const styles = StyleSheet.create({
   container: {
